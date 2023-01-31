@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>My Website</title>
+        <script>
+            const filecontent = `{{ filecontent }}`;
+            const username = '{{ username }}';
+        </script>
+    </head>
+<body style="overflow: hidden">
+    <div id="app"></div>
+</body>
+{% load static %}
+<script src="{% static "index.js" %}"></script>
+</html>

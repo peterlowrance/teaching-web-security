@@ -13,15 +13,24 @@ Install deps
 
 `pip install -r requirements.txt`
 
-Run server
+Run server (for each application)
 
-`python manage.py runserver`
+```
+cd attacking-website
+python manage.py runserver 8080
+```
+
+```
+cd vulnverable-website
+python manage.py migrate
+python manage.py runserver 80801
+```
 
 
-
-### Frontend
-
+### Frontend for attacking-website
 In website/react-website, run:
+
+`cd attacking-website/website/react-website`
 
 `npm install` to setup once
 
