@@ -59,3 +59,8 @@ def send(request):
     response = redirect('home')
     response['Location'] += '?username=' + user.username
     return response
+
+@never_cache
+def fake_search(request):
+    search_term = request.GET.get('term')
+    return render(request, 'search.html', context={'content': search_term})

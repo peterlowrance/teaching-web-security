@@ -11,15 +11,21 @@
         {% endautoescape %}
     </div>
     <div>
-        Your session toke is <span id="session"></span> {{ session }}
+        Your session token is <span id="session"></span> {{ session }}
     </div>
     <div>
         Current balance {{ balance }}
     </div>
-    <div>
+    <div style="padding-top: 15px">
         <form action="/send" method="get">
             <input type="number" name="amount" value="100">
-            <input type="submit" value="Send">
+            <input type="submit" value="Send money">
+        </form>
+    </div>
+    <div style="padding-top: 15px">
+        <form action="/search" method="get">
+            <input type="text" name="term" value="">
+            <input type="submit" value="Search">
         </form>
     </div>
 </body>
