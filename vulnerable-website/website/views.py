@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from .models import User
 import uuid
-from django.views.generic.base import RedirectView
 from django.shortcuts import redirect
 from django.views.decorators.cache import never_cache
 
@@ -33,18 +32,19 @@ def create_user(request):
     response['Location'] += '?username=' + username
     return response
 
-@never_cache
 def index(request):
     overwrite_username = request.GET.get('username')
     session = request.COOKIES.get('session')
     if session is None:
         print('Not logged in')
-        return RedirectView.as_view(url='login', permanent=False)
-    
-    user = User.objects.get(session=session)
+        return redirect('login')
+    try:
+        user = User.objects.get(session=session)
+    except:
+        return redirect('login')
     # If session token doesn't match user, go to login page
     if session != user.session:
-        return RedirectView.as_view(url='login', permanent=False)
+        return redirect('login')
 
     response = render(request, 'index.html', {'username': overwrite_username if overwrite_username else user.username, 'balance': user.balance})
     return response

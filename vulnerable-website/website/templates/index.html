@@ -7,8 +7,11 @@
 <body>
     <div>
         {% autoescape off %}
-        Welcome <span>{{ username }}</span> (session token <span id="session"></span> {{ session }})
+        Welcome <span>{{ username }}</span>
         {% endautoescape %}
+    </div>
+    <div>
+        Your session toke is <span id="session"></span> {{ session }}
     </div>
     <div>
         Current balance {{ balance }}
