@@ -16,7 +16,7 @@ function App() {
       .catch(error => console.log(error));
   }
 
-  const debouncedPost = useRef(_.debounce(post, 1500)).current;
+  const debouncedPost = useRef(_.debounce(post, 500)).current;
 
   const handleChange = (e) => {
     const newContent = e.target.value;
