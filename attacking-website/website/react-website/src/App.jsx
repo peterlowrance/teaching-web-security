@@ -24,6 +24,12 @@ function App() {
     setSaved(false);
     debouncedPost(newContent);
   }
+
+  const handleRestore = () => {
+    if (confirm('Are you sure you want to restore the html to default?')) {
+      axios.post('/api/restore').then(() => window.location.reload());
+    }
+  }
  
   // Capture ctrl + s
   useEffect(() => {
@@ -35,7 +41,7 @@ function App() {
     });
   }, []);
   
-  return <div style={{width: 'calc(100vw - 32px', height: 'calc(100vh - 32px)', margin: 16, position: 'absolute'}}>
+  return <div style={{width: 'calc(100vw - 32px', height: 'calc(100vh - 32px)', margin: 16, position: 'relative'}}>
       <div style={{width: '100%', maxHeight: 'calc(100% - 64px)', marginBottom: 8}} data-color-mode="light">
         Editing website for {username}
         <CodeEditor
@@ -56,6 +62,9 @@ function App() {
       </span>
       <div style={{marginTop: 8}}>
         <button onClick={() => window.location.replace(window.location.origin + '/home/' + username)}>Go to website page</button>
+      </div>
+      <div style={{ position: 'absolute', top: 24, right: 8}}>
+        <button onClick={handleRestore}>Restore</button>
       </div>
     </div>
 }

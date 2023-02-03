@@ -63,3 +63,15 @@ def create_website(request):
     response = redirect('home', username=username)
     response.set_cookie("username", username)
     return response
+
+@never_cache
+@api_view(['POST'])
+def restore(request):
+    username = request.COOKIES.get('username')
+    if username is None:
+        return Response(status=400)
+    with open(index_backup_file_path, 'rt') as f:
+        user_html_path = index_file_path.replace('index', f'{username}_index')
+        with open(user_html_path, 'wt') as f_write:
+            f_write.write(f.read())
+    return Response()

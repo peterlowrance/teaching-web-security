@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY attacking-website ./attacking-website
 COPY vulnerable-bank ./vulnerable-bank
 COPY start-attack-and-bank.sh .
+RUN rm -rf attacking-website/website/react-website/node_modules
 
 EXPOSE 8080
 EXPOSE 8081
