@@ -3,7 +3,7 @@ from .models import User
 import uuid
 from django.shortcuts import redirect
 from django.views.decorators.cache import never_cache
-
+from django.contrib.auth import logout
 
 @never_cache
 def login(request):
@@ -12,9 +12,17 @@ def login(request):
         user = User.objects.get(session=session)
         response = redirect('home')
         response['Location'] += '?username=' + user.username
+        response.set_cookie('session', user.session)
         return response
     except:
         return render(request, 'login.html')
+
+@never_cache
+def system_logout(request):
+    logout(request)
+    response = render(request, 'login.html')
+    response.delete_cookie('session')
+    return response
 
 @never_cache
 def create_user(request):
@@ -46,16 +54,18 @@ def index(request):
     if session != user.session:
         return redirect('login')
 
-    response = render(request, 'index.html', {'username': overwrite_username if overwrite_username else user.username, 'balance': user.balance})
+    response = render(request, 'index.html', {'username': overwrite_username if overwrite_username else user.username, 'friends': [user.username for user in user.friends.all()] if len(user.friends.all()) > 0 else ""})
     return response
 
 @never_cache
-def send(request):
-    amount = int(request.GET.get('amount', 0))
+def friend_request(request):
+    friend = request.GET.get('name')
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
-    user.balance -= amount
+    friend_user = User.objects.get(username=friend)
+    user.friends.add(friend_user)
     user.save()
+    friend_user.save()
     response = redirect('home')
     response['Location'] += '?username=' + user.username
     return response

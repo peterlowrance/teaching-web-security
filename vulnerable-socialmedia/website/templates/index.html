@@ -11,15 +11,21 @@
         {% endautoescape %}
     </div>
     <div>
-        Your session toke is <span id="session"></span> {{ session }}
+        Your session token is <span id="session"></span> {{ session }}
     </div>
     <div>
-        Current balance {{ balance }}
+        Current friends {{ friends }}
     </div>
     <div>
-        <form action="/send" method="get">
-            <input type="number" name="amount" value="100">
+        <form action="/friend" method="get">
+            <label for="friend-request" >Friend Request</label><br/>
+            <input id="friend-request" type="text" name="name">
             <input type="submit" value="Send">
+        </form>
+    </div>
+    <div style="padding-top: 10px">
+        <form action="/logout" method="get">
+            <input type="submit" value="Logout">
         </form>
     </div>
 </body>
