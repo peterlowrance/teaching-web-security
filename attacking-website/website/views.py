@@ -11,6 +11,7 @@ index_backup_file_path = './website/templates/indexBACKUP.html'
 def create_page(request):
     return render(request, 'create.html')
 
+
 @never_cache
 def index(request, username):
     username = request.COOKIES.get('username')

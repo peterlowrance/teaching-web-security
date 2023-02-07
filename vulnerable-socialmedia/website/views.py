@@ -3,8 +3,16 @@ from .models import User
 import uuid
 from django.shortcuts import redirect
 from django.views.decorators.cache import never_cache
-from django.contrib.auth import logout
 
+from django.contrib.auth import logout
+import json
+from urllib.parse import parse_qs
+import re
+
+FLAG_1 = "CSRF_IS_EZ"
+FLAG_2 = "BIO_HACKING"
+FLAG_3 = "XSS_IS_EVEN_EZR"
+FLAG_4 = "EMAIL_PROBLEM"
 @never_cache
 def login(request):
     session = request.COOKIES.get('session')
@@ -40,6 +48,7 @@ def create_user(request):
     response['Location'] += '?username=' + username
     return response
 
+
 def index(request):
     overwrite_username = request.GET.get('username')
     session = request.COOKIES.get('session')
@@ -54,7 +63,11 @@ def index(request):
     if session != user.session:
         return redirect('login')
 
-    response = render(request, 'index.html', {'username': overwrite_username if overwrite_username else user.username, 'friends': [user.username for user in user.friends.all()] if len(user.friends.all()) > 0 else ""})
+    flag_1 = FLAG_1 if user.friends.filter(username=user.username).exists() else ""
+    flag_2 = FLAG_2 if user.bio == "give me the flag" else ""
+    flag_3 = FLAG_3 if user.has_xss_flag_1 else ""
+    flag_4 = FLAG_4 if user.email == 'I think I have been hacked' else ""
+    response = render(request, 'index.html', { 'flag1': flag_1, "flag2": flag_2, "flag3": flag_3, 'flag4': flag_4, 'email': user.email, 'bio': user.bio, 'username': overwrite_username if overwrite_username else user.username, 'friends': [user.username for user in user.friends.all()] if len(user.friends.all()) > 0 else ""})
     return response
 
 @never_cache
@@ -62,10 +75,68 @@ def friend_request(request):
     friend = request.GET.get('name')
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
-    friend_user = User.objects.get(username=friend)
-    user.friends.add(friend_user)
+    if friend == "":
+        return redirect('home')
+    elif friend == user.username:
+        if request.META['HTTP_SEC_FETCH_DEST'] == 'document':
+            return render(request, 'try_again.html')
+
+    friend_user = User.objects.filter(username=friend)
+    if not friend_user.exists():
+        token = str(uuid.uuid1()).split('-')[0]
+        friend_user = User(username=friend, session=token)
+        friend_user.save()
+    else:
+        friend_user = friend_user.all()[0]
+    if user.friends.filter(username=friend).exists():
+        user.friends.remove(friend_user)
+    else:
+        user.friends.add(friend_user)
     user.save()
     friend_user.save()
     response = redirect('home')
     response['Location'] += '?username=' + user.username
     return response
+
+@never_cache
+def set_bio(request):
+    session = request.COOKIES.get('session')
+    user = User.objects.get(session=session)
+    bio = parse_qs(request.body.decode())
+
+    if bio != {}:
+        bio_text = bio['bio'][0]
+        if bio_text == 'give me the flag' and 'HTTP_REFERER' in request.META:
+            return render(request, 'try_again.html')
+        user.bio = bio_text
+        user.save()
+    return redirect('home')
+
+@never_cache
+def set_email(request):
+    session = request.COOKIES.get('session')
+    user = User.objects.get(session=session)
+    email = parse_qs(request.body.decode())
+    if email != {}:
+        email_text = email['email'][0]
+        if email_text == 'I think I have been hacked' and 'HTTP_X_REQUESTED_WITH' not in request.META:
+            return render(request, 'try_again.html')
+        user.email = email_text
+        user.save()
+    return redirect('home')
+
+@never_cache
+def test_endpoint(request):
+    return render(request, 'index3.html')
+
+@never_cache
+def fake_search(request):
+    session = request.COOKIES.get('session')
+    user = User.objects.get(session=session)
+    search_term = request.GET.get('term')
+    regex = "^<script>alert\(\"your flag is mine!\"\);?<\/script>$"
+    result = re.findall(regex, search_term)
+    if len(result) > 0:
+        user.has_xss_flag_1 = True
+        user.save()
+    return render(request, 'search.html', context={'content': search_term})

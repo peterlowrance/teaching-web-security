@@ -6,7 +6,7 @@ from django.conf import settings
 from . import views
 
 urlpatterns = [
-    path('', RedirectView.as_view(url='create', permanent=False), name='login'),
+    path('', RedirectView.as_view(url='home', permanent=False), name='login'),
     path('home/<str:username>', views.index, name='home'),
     path('home/', views.redirect_index, name='redirect_index'),
     path('create/', views.create_page, name='create'),

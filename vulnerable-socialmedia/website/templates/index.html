@@ -3,8 +3,10 @@
     <head>
         <meta charset="utf-8">
         <title>My Website</title>
+        <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
     </head>
-<body>
+
+<body onload="checkFlags()">
     <div>
         {% autoescape off %}
         Welcome <span>{{ username }}</span>
@@ -13,21 +15,67 @@
     <div>
         Your session token is <span id="session"></span> {{ session }}
     </div>
+    <hr/>
+    <h3>CSRF 1</h3>
+    <div>
+        <form style="padding-top: 10px" onkeydown="return event.key != 'Enter';" id='friend-form' action="/friend" method="get">
+            <label for="friend-request" >Friend Request</label><br/>
+            <input id="friend-request" type="text" name="name">
+            <input type="button" value="Friend/Unfriend" onclick="submitFriendForm()" />
+        </form>
+    </div>
     <div>
         Current friends {{ friends }}
     </div>
+    <hr/>
+    <h3>CSRF 2</h3>
     <div>
-        <form action="/friend" method="get">
-            <label for="friend-request" >Friend Request</label><br/>
-            <input id="friend-request" type="text" name="name">
-            <input type="submit" value="Send">
+        <form style="padding-top: 10px" onkeydown="return event.key != 'Enter';" id="set-bio" action="set-bio" method="post">
+            <label for="bio">Bio</label><br/>
+            <input id="bio" type="text" name="bio" />
+            <input type="button" value="Submit" onclick="submitBioForm()" />
         </form>
     </div>
+    <div style="padding-top: 15px" id="bio_field">
+        Your bio:<br/>
+        {% autoescape off %}
+        {{bio}}
+        {% endautoescape %}
+    </div>
+    <hr/>
+    <h3>XSS 1</h3>
+    <div style="padding-top: 10px">
+        <form onkeydown="return event.key != 'Enter';" action="/search" method="get" id="search-form">
+            <label to="search_bar">Search for users</label><br/>
+            <input type="text" name="term" id='search_bar' value="">
+            <input type="button" value="Submit" onclick="submitSearchForm()" />
+        </form>
+    </div>
+    <hr/>
+    <h3>XSS 2</h3>
+    <div style="padding-top: 10px">
+        <form onkeydown="return event.key != 'Enter';" action="/set-email" method="post" id="email-form">
+            <label to="search_bar">Set email</label><br/>
+            <input type="text" name="email" id='email_value' value="">
+            <input type="button" value="Submit" onclick="submitEmailForm()" />
+        </form>
+    </div>
+    <div style="padding-top: 15px" id="email_field">
+        Your email:<br/>
+        {{email}}
+    </div>
+    <hr/>
     <div style="padding-top: 10px">
         <form action="/logout" method="get">
             <input type="submit" value="Logout">
         </form>
     </div>
+    <div style="padding-top: 10px" id="flag-1"></div>
+    <div style="padding-top: 10px" id="flag-2"></div>
+    <div style="padding-top: 10px" id="flag-3"></div>
+    <div style="padding-top: 10px" id="flag-4"></div>
+
+
 </body>
 
 <script>
@@ -35,6 +83,69 @@
       var value = "; " + document.cookie;
       var parts = value.split("; " + name + "=");
       if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    function submitFriendForm() {
+        const nameToFriend = document.getElementById('friend-request');
+        if(nameToFriend.value == "{{username}}"){
+            alert("Did you really think it would be that easy?")
+            nameToFriend.value = ""
+        }
+        else{
+            const friendForm = document.getElementById('friend-form')
+            friendForm.submit()
+        }
+    }
+
+    function submitBioForm() {
+        const bio = document.getElementById('bio')
+        if(bio.value == "give me the flag"){
+            alert("Did you really think it would be that easy?")
+            bio.value = ""
+        }
+        else{
+            const bioForm = document.getElementById("set-bio")
+            bioForm.submit()
+        }
+    }
+
+    function submitSearchForm(){
+        const search = document.getElementById('search_bar')
+        if(search.value.includes('<script>')){
+            alert("Did you really think it would be that easy?")
+            search.value=""
+        }
+        else{
+            const searchForm = document.getElementById("search-form")
+            searchForm.submit()
+        }
+    }
+
+    function submitEmailForm(){
+        const email = document.getElementById('email_value')
+        if(email.value == 'I think I have been hacked'){
+            alert("Did you really think it would be that easy?")
+            email.value=""
+        }
+        else{
+            const emailForm = document.getElementById("email-form")
+            emailForm.submit()
+        }
+    }
+
+    function checkFlags() {
+        if("{{flag1}}" !== ""){
+            document.getElementById('flag-1').innerHTML = "The flag for CSRF 1 is {{flag1}}";
+        }
+        if("{{flag2}}" !== ""){
+            document.getElementById('flag-2').innerHTML = "The flag for CSRF 2 is {{flag2}}";
+        }
+        if("{{flag3}}" !== ""){
+            document.getElementById('flag-3').innerHTML = "The flag for XSS 1 is {{flag3}}";
+        }
+        if("{{flag4}}" !== ""){
+            document.getElementById('flag-4').innerHTML = "The flag for XSS 2 is {{flag4}}";
+        }
     }
     var session = getCookie("session");
     const sEl = document.getElementById('session');
