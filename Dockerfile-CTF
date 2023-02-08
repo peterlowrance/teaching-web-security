@@ -1,0 +1,16 @@
+FROM python:3-slim
+
+WORKDIR /usr/src/app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY attacking-website ./attacking-website
+COPY vulnerable-socialmedia ./vulnerable-socialmedia
+COPY start-attack-and-socialmedia.sh .
+RUN rm -rf attacking-website/website/react-website/node_modules
+
+EXPOSE 8080
+EXPOSE 8081
+
+CMD [ "sh", "start-attack-and-socialmedia.sh" ]
