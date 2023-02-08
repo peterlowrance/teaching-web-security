@@ -3,7 +3,7 @@ from .models import User
 import uuid
 from django.shortcuts import redirect
 from django.views.decorators.cache import never_cache
-
+import threading
 from django.contrib.auth import logout
 import json
 from urllib.parse import parse_qs
@@ -13,6 +13,10 @@ FLAG_1 = "CSRF_IS_EZ"
 FLAG_2 = "BIO_HACKING"
 FLAG_3 = "XSS_IS_EVEN_EZR"
 FLAG_4 = "EMAIL_PROBLEM"
+FLAG_5 = "WORM_WORLD"
+
+# The final XSS solution has a race condition this fixes
+my_mutex = threading.Lock()
 @never_cache
 def login(request):
     session = request.COOKIES.get('session')
@@ -48,7 +52,7 @@ def create_user(request):
     response['Location'] += '?username=' + username
     return response
 
-
+@never_cache
 def index(request):
     overwrite_username = request.GET.get('username')
     session = request.COOKIES.get('session')
@@ -72,6 +76,7 @@ def index(request):
 
 @never_cache
 def friend_request(request):
+    my_mutex.acquire()
     friend = request.GET.get('name')
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
@@ -96,20 +101,22 @@ def friend_request(request):
     friend_user.save()
     response = redirect('home')
     response['Location'] += '?username=' + user.username
+    my_mutex.release()
     return response
 
 @never_cache
 def set_bio(request):
+    my_mutex.acquire()
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
     bio = parse_qs(request.body.decode())
-
     if bio != {}:
         bio_text = bio['bio'][0]
         if bio_text == 'give me the flag' and 'HTTP_REFERER' in request.META:
             return render(request, 'try_again.html')
         user.bio = bio_text
         user.save()
+    my_mutex.release()
     return redirect('home')
 
 @never_cache
@@ -130,7 +137,7 @@ def test_endpoint(request):
     return render(request, 'index3.html')
 
 @never_cache
-def fake_search(request):
+def search(request):
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
     search_term = request.GET.get('term')
@@ -139,4 +146,18 @@ def fake_search(request):
     if len(result) > 0:
         user.has_xss_flag_1 = True
         user.save()
+    root_user = user.username
+    suffix_regex = ".*_\d+$"
+    suffix_result = re.findall(suffix_regex, root_user)
+    if len(suffix_result) > 0:
+        loc = root_user.rindex('_')
+        root_user = root_user[:loc]
+    
+
+    if search_term.startswith(root_user) or root_user == 'plowrance' or root_user == 'bryan':
+        searched_for_users = User.objects.filter(username=search_term)
+        if searched_for_users.exists():
+            user_to_send = searched_for_users.all()[0]
+            response = render(request, 'search_found.html', {'email': user_to_send.email, 'bio': user_to_send.bio, 'username': user_to_send.username, 'friends': [user.username for user in user_to_send.friends.all()] if len(user_to_send.friends.all()) > 0 else ""})
+            return response
     return render(request, 'search.html', context={'content': search_term})
