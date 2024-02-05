@@ -100,7 +100,7 @@
     function submitBioForm() {
         const bio = document.getElementById('bio')
         if (bio.value == "give me the flag") {
-            alert("Did you really think it would be that easy?")
+            alert("Did you really think it would be that easy? Make sure you are performing the attack from the attacking website.")
             bio.value = ""
         }
         else {
@@ -111,8 +111,10 @@
 
     function submitSearchForm() {
         const search = document.getElementById('search_bar')
-        if (search.value.includes('<script>')) {
-            alert("Did you really think it would be that easy?")
+        const re = /<script[\s\S]*?>[\s\S]*?<\/script[\s\S]*?>/gi
+
+        if (search.value.match(re)) {
+            alert("Did you really think it would be that easy? Try creating a URL for this attack instead of using the searchbar directly.")
             search.value = ""
         }
         else {
@@ -124,7 +126,7 @@
     function submitEmailForm() {
         const email = document.getElementById('email_value')
         if (email.value == 'I think I have been hacked') {
-            alert("Did you really think it would be that easy?")
+            alert("Did you really think it would be that easy? Try using a persistent XSS attack to set the email.")
             email.value = ""
         }
         else {

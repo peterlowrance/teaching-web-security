@@ -136,23 +136,24 @@ def search(request):
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
     search_term = request.GET.get('term')
-    regex = "^<script>alert\([\"\']your flag is mine![\"\']\);?<\/script>$"
+    regex = "^<script[\s\S]*?>alert\([\"\']your flag is mine![\"\']\);?<\/script[\s\S]*?>$"
     result = re.findall(regex, search_term)
     if len(result) > 0:
         user.has_xss_flag_1 = True
         user.save()
-    root_user = user.username
-    suffix_regex = ".*_\d+$"
-    suffix_result = re.findall(suffix_regex, root_user)
-    if len(suffix_result) > 0:
-        loc = root_user.rindex('_')
-        root_user = root_user[:loc]
-    
 
-    if search_term.startswith(root_user) or root_user == 'plowrance' or root_user == 'bryan':
-        searched_for_users = User.objects.filter(username=search_term)
-        if searched_for_users.exists():
-            user_to_send = searched_for_users.all()[0]
-            response = render(request, 'search_found.html', {'email': user_to_send.email, 'bio': user_to_send.bio, 'username': user_to_send.username, 'friends': [user.username for user in user_to_send.friends.all()] if len(user_to_send.friends.all()) > 0 else ""})
-            return response
+    searched_for_users = User.objects.filter(username=search_term)
+    if searched_for_users.exists():
+        user_to_send = searched_for_users.all()[0]
+        response = render(
+            request,
+            'search_found.html',
+            {
+                'email': user_to_send.email,
+                'bio': user_to_send.bio,
+                'username': user_to_send.username,
+                'friends': [user.username for user in user_to_send.friends.all()] if len(user_to_send.friends.all()) > 0 else ""
+            }
+        )
+        return response
     return render(request, 'search.html', context={'content': search_term})
