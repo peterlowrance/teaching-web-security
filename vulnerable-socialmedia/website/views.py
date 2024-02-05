@@ -42,7 +42,7 @@ def create_user(request):
     try:
         user = User.objects.get(username=username)
         token = user.session
-    except:
+    except User.DoesNotExist:
         token = str(uuid.uuid1()).split('-')[0]
         print('Creating first time user ', username, ', session token', token)
         user = User(username=username, session=token)
@@ -76,47 +76,46 @@ def index(request):
 
 @never_cache
 def friend_request(request):
-    my_mutex.acquire()
-    friend = request.GET.get('name')
-    session = request.COOKIES.get('session')
-    user = User.objects.get(session=session)
-    if friend == "":
-        return redirect('home')
-    elif friend == user.username:
-        if request.META['HTTP_SEC_FETCH_DEST'] == 'document':
-            return render(request, 'try_again.html')
+    with my_mutex:
+        friend = request.GET.get('name')
+        session = request.COOKIES.get('session')
+        user = User.objects.get(session=session)
+        if friend == "":
+            return redirect('home')
+        elif friend == user.username:
+            if request.META['HTTP_SEC_FETCH_DEST'] == 'document':
+                return render(request, 'try_again.html')
 
-    friend_user = User.objects.filter(username=friend)
-    if not friend_user.exists():
-        token = str(uuid.uuid1()).split('-')[0]
-        friend_user = User(username=friend, session=token)
+        friend_user = User.objects.filter(username=friend)
+        if not friend_user.exists():
+            token = str(uuid.uuid1()).split('-')[0]
+            friend_user = User(username=friend, session=token)
+            friend_user.save()
+        else:
+            friend_user = friend_user.all()[0]
+        if user.friends.filter(username=friend).exists():
+            user.friends.remove(friend_user)
+        else:
+            user.friends.add(friend_user)
+        user.save()
         friend_user.save()
-    else:
-        friend_user = friend_user.all()[0]
-    if user.friends.filter(username=friend).exists():
-        user.friends.remove(friend_user)
-    else:
-        user.friends.add(friend_user)
-    user.save()
-    friend_user.save()
-    response = redirect('home')
-    response['Location'] += '?username=' + user.username
-    my_mutex.release()
+        response = redirect('home')
+        response['Location'] += '?username=' + user.username
     return response
 
 @never_cache
 def set_bio(request):
-    my_mutex.acquire()
-    session = request.COOKIES.get('session')
-    user = User.objects.get(session=session)
-    bio = parse_qs(request.body.decode())
-    if bio != {}:
-        bio_text = bio['bio'][0]
-        if bio_text == 'give me the flag' and 'HTTP_REFERER' in request.META:
-            return render(request, 'try_again.html')
-        user.bio = bio_text
-        user.save()
-    my_mutex.release()
+    with my_mutex:
+        session = request.COOKIES.get('session')
+        user = User.objects.get(session=session)
+        bio = parse_qs(request.body.decode())
+        if bio != {}:
+            bio_text = bio['bio'][0]
+            # TODO: change the text you need to put in to <script></script>? Why hardcoding http_referer check?
+            if bio_text == 'give me the flag' and 'HTTP_REFERER' in request.META:
+                return render(request, 'try_again.html')
+            user.bio = bio_text
+            user.save()
     return redirect('home')
 
 @never_cache
@@ -133,15 +132,11 @@ def set_email(request):
     return redirect('home')
 
 @never_cache
-def test_endpoint(request):
-    return render(request, 'index3.html')
-
-@never_cache
 def search(request):
     session = request.COOKIES.get('session')
     user = User.objects.get(session=session)
     search_term = request.GET.get('term')
-    regex = "^<script>alert\(\"your flag is mine!\"\);?<\/script>$"
+    regex = "^<script>alert\([\"\']your flag is mine![\"\']\);?<\/script>$"
     result = re.findall(regex, search_term)
     if len(result) > 0:
         user.has_xss_flag_1 = True
