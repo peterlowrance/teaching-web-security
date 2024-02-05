@@ -80,11 +80,9 @@ def friend_request(request):
         friend = request.GET.get('name')
         session = request.COOKIES.get('session')
         user = User.objects.get(session=session)
+        # TODO: They can just type this in the address bar, no idea how to fix
         if friend == "":
             return redirect('home')
-        elif friend == user.username:
-            if request.META['HTTP_SEC_FETCH_DEST'] == 'document':
-                return render(request, 'try_again.html')
 
         friend_user = User.objects.filter(username=friend)
         if not friend_user.exists():
